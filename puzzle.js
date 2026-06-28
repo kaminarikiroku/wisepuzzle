@@ -15,7 +15,7 @@ const GRID_HEIGHT = ROWS * BASE_CELL; // 490
 let scale = 1;
 
 /* =========================
-   リサイズ処理（【修正】余白を削って全体を大きく）
+   リサイズ処理（余白を削って全体を大きく）
 ========================= */
 function resizeCanvas() {
   const windowW = window.innerWidth;
@@ -50,7 +50,9 @@ for (let y = 0; y < ROWS; y++) {
   }
 }
 let used = new Set();
-let pieces = [];
+
+// A, B, C, D の4つの固定部屋スロットとして管理
+let pieces = [null, null, null, null]; 
 
 let dragging = false;
 let dragPiece = null;
@@ -164,10 +166,9 @@ function addNewPiece(label) {
 }
 
 function generatePieces() {
-  pieces = [];
+  pieces = [null, null, null, null];
   for (let i = 0; i < 4; i++) {
-    const p = addNewPiece(labels[i]);
-    if (p) pieces.push(p);
+    pieces[i] = addNewPiece(labels[i]);
   }
 }
 
@@ -218,10 +219,13 @@ function drawPieces() {
   const imgW = img.width / COLS;
   const imgH = img.height / ROWS;
 
-  pieces.forEach((p, i) => {
-    if (dragging && dragPiece === i) return;
+  for (let i = 0; i < 4; i++) {
+    let p = pieces[i];
+    if (!p) continue;
 
-    // 下側の置き場（グリッドのすぐ下、余白を詰めて配置）
+    if (dragging && dragPiece === i) continue;
+
+    // 下側の置き場（i = 0:A, 1:B, 2:C, 3:D の並び位置が完全固定）
     let px = 15 + i * (BASE_CELL + 105);
     let py = GRID_HEIGHT + 30;
 
@@ -244,28 +248,29 @@ function drawPieces() {
     ctx.lineWidth = 8;
     ctx.strokeText(label, labelX, labelY);
     ctx.fillText(label, labelX, labelY);
-  });
+  }
 
   if (dragging && dragPiece !== null) {
     let p = pieces[dragPiece];
-    ctx.globalAlpha = 0.6;
-    ctx.drawImage(
-      img,
-      p.x * imgW,
-      p.y * imgH,
-      imgW,
-      imgH,
-      mouseX - BASE_CELL / 2,
-      mouseY - BASE_CELL / 2,
-      BASE_CELL,
-      BASE_CELL
-    );
-    ctx.globalAlpha = 1.0;
+    if (p) {
+      ctx.globalAlpha = 0.6;
+      ctx.drawImage(
+        img,
+        p.x * imgW,
+        p.y * imgH,
+        imgW,
+        imgH,
+        mouseX - BASE_CELL / 2,
+        mouseY - BASE_CELL / 2,
+        BASE_CELL,
+        BASE_CELL
+      );
+      ctx.globalAlpha = 1.0;
+    }
   }
 }
 
 function drawAnswer() {
-  // 正解画像のサイズ（右側の余白にぴったり収まるよう調整）
   const size = 340; 
   const dx = GRID_WIDTH + 40;
   const dy = BASE_HEIGHT - size - 15;
@@ -284,7 +289,7 @@ function drawAnswer() {
 }
 
 /* =========================
-   座標変換
+   座標変換 (PC・スマホ共通)
 ========================= */
 function getMouse(e) {
   const rect = canvas.getBoundingClientRect();
@@ -294,50 +299,51 @@ function getMouse(e) {
   };
 }
 
+function getTouchPos(e) {
+  if (!e.touches || e.touches.length === 0) return { x: mouseX, y: mouseY };
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.touches[0].clientX - rect.left) / scale,
+    y: (e.touches[0].clientY - rect.top) / scale
+  };
+}
+
 /* =========================
-   マウス操作
+   操作イベント（マウス＆タッチ両対応）
 ========================= */
-canvas.addEventListener("mousedown", (e) => {
+
+function handleStart(x, y) {
   if (!gameStarted) return;
 
-  const { x, y } = getMouse(e);
+  for (let i = 0; i < 4; i++) {
+    if (!pieces[i]) continue;
 
-  pieces.forEach((p, i) => {
     let px = 15 + i * (BASE_CELL + 105);
     let py = GRID_HEIGHT + 30;
 
     if (x >= px && x <= px + BASE_CELL && y >= py && y <= py + BASE_CELL) {
       dragging = true;
-      dragPiece = i;
+      dragPiece = i; // 掴んだスロットインデックス(0=A, 1=B...)を固定記憶
+      break;
     }
-  });
-});
+  }
+}
 
-canvas.addEventListener("mousemove", (e) => {
-  const pos = getMouse(e);
-  mouseX = pos.x;
-  mouseY = pos.y;
-});
-
-canvas.addEventListener("mouseup", () => {
+function handleEnd() {
   if (!dragging || dragPiece === null) return;
 
   let gx = Math.floor(mouseX / BASE_CELL);
   let gy = Math.floor(mouseY / BASE_CELL);
   let p = pieces[dragPiece];
 
-  if (gx === p.x && gy === p.y && grid[gy]?.[gx] === 0) {
+  if (p && gx === p.x && gy === p.y && grid[gy]?.[gx] === 0) {
     grid[gy][gx] = 1;
     
-    const targetIndex = dragPiece;
-    const removedLabel = p.label;
-
-    pieces.splice(targetIndex, 1);
-
-    const newP = addNewPiece(removedLabel);
-    if (newP) {
-      pieces.splice(targetIndex, 0, newP);
-    }
+    // 正解したスロットの本来の文字(A〜D)を引き継ぐ
+    const currentLabel = labels[dragPiece]; 
+    
+    // そのアルファベットの位置スロットを、新しいピースで直接上書き
+    pieces[dragPiece] = addNewPiece(currentLabel);
 
     if (checkGameClear()) {
       gameClear = true;
@@ -346,6 +352,37 @@ canvas.addEventListener("mouseup", () => {
 
   dragging = false;
   dragPiece = null;
+}
+
+// ① 押し込み（クリック / タッチ開始）
+canvas.addEventListener("mousedown", (e) => {
+  const { x, y } = getMouse(e);
+  handleStart(x, y);
+});
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const { x, y } = getTouchPos(e);
+  handleStart(x, y);
+}, { passive: false });
+
+// ② 移動（ドラッグ中）
+canvas.addEventListener("mousemove", (e) => {
+  const pos = getMouse(e);
+  mouseX = pos.x;
+  mouseY = pos.y;
+});
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  const pos = getTouchPos(e);
+  mouseX = pos.x;
+  mouseY = pos.y;
+}, { passive: false });
+
+// ③ 離したとき（ドロップ）
+canvas.addEventListener("mouseup", handleEnd);
+canvas.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  handleEnd();
 });
 
 /* =========================
