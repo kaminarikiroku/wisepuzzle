@@ -95,7 +95,7 @@ let mouseY = 0;
 ========================= */
 
 const img = new Image();
-img.src = "img/ワイズ.png";
+img.src = "img/wise.png";
 
 /* =========================
    ラベル
