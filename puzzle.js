@@ -345,10 +345,18 @@ function handleEnd() {
     const currentLabel = labels[dragPiece]; 
     pieces[dragPiece] = addNewPiece(currentLabel);
 
+    // ==========================================
+    // 【修正】クリアした時の処理
+    // ==========================================
     if (checkGameClear()) {
       gameClear = true;
+
+      setTimeout(() => {
+        window.location.href = "https://www.youtube.com/embed/gN713yRA6eM?si=-xxb5LQMeCmEDucd&amp;start=1222"; 
+      }, 1000);
     }
   }
+  
 
   dragging = false;
   dragPiece = null;
