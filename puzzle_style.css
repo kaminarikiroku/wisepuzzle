@@ -1,21 +1,27 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden; /* スクロール完全禁止 */
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: url("img/cork.jpg");
-  background-size: cover;
-
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 余計なスクロールバーを消す */
   display: flex;
   justify-content: center;
-  align-items: center; /* ← これが重要（上下中央） */
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+
+  background-image: url("img/cork.jpg"); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 canvas {
+  /* 【修正】黒の半透明を削除し、完全に透明にしました */
+  background-color: transparent; 
+  /* パズルが背景に埋もれないよう、外枠にマイルドな影だけ残しています */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4); 
   display: block;
-  background: url("img/cork.jpg");
-  background-size: cover;
 }
