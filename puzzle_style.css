@@ -5,18 +5,19 @@
 body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* 余計なスクロールバーを消す */
+  overflow: hidden; /* 余計なスクロールバーを完全にシャットアウト */
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: center; /* 左右の中央寄せ */
+  align-items: center;     /* 上下の中央寄せ */
   width: 100vw;
   height: 100vh;
 
-  /* ブラウザ全体の背景画像（お好みの画像パスに変更してください） */
-  background-image: url("img/cork.jpg"); 
+  /* 背景画像の設定 */
+  background-image: url("img/background.png"); 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: #222; /* 画像がないときのフォールバック */
 }
 
 canvas {
@@ -25,9 +26,7 @@ canvas {
   display: block;
 }
 
-/* ==========================================
-   【修正】スタートボタンのスタイリング（カッコ良く変更）
-========================================== */
+/* スタートボタンのスタイル（以前のものを維持） */
 .game-start-btn {
   position: absolute;
   font-family: 'Arial Black', sans-serif;
@@ -36,20 +35,15 @@ canvas {
   padding: 16px 45px;
   cursor: pointer;
   z-index: 999;
-  
   color: #00ff99;
   background: rgba(0, 0, 0, 0.85);
   border: 3px solid #00ff99;
   border-radius: 8px;
-  
-  /* サイバーパンク風の光るエフェクト */
   box-shadow: 0 0 15px rgba(0, 255, 153, 0.4), inset 0 0 10px rgba(0, 255, 153, 0.2);
   text-shadow: 0 0 8px rgba(0, 255, 153, 0.6);
   letter-spacing: 2px;
   transition: all 0.3s ease;
 }
-
-/* ホバー（マウスを乗せたとき）のアニメーション */
 .game-start-btn:hover {
   color: #ffffff;
   background: #00ff99;
@@ -57,8 +51,35 @@ canvas {
   text-shadow: none;
   transform: scale(1.05);
 }
-
-/* ボタンを押した瞬間 */
 .game-start-btn:active {
   transform: scale(0.95);
+}
+
+
+/* ========================================================
+   【新規追加】スマホ縦持ち（縦幅が横幅より長い）のときの警告処理
+======================================================== */
+@media (orientation: portrait) and (max-width: 900px) {
+  body::before {
+    content: "画面を横向きにしてプレイしてください 🔄";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #111; /* 警告時の画面背景 */
+    color: #00ff99;          /* 文字色をスタートボタンと統一 */
+    font-family: 'Arial Black', sans-serif;
+    z-index: 10000;         /* 一番手前に表示 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 20px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  /* 縦画面のときはゲーム画面とボタンを非表示にして誤操作を防ぐ */
+  canvas, .game-start-btn {
+    display: none !important;
+  }
 }
