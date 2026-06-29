@@ -13,7 +13,7 @@ body {
   height: 100vh;
 
   /* 背景画像の設定 */
-  background-image: url("img/cork.png"); 
+  background-image: url("img/cork.jpg"); 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
